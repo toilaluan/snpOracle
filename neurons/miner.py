@@ -21,8 +21,6 @@ import argparse
 import time
 import typing
 import bittensor as bt
-import numpy as np
-from tensorflow.keras.models import load_model
 
 from base_miner.predict import predict
 from base_miner.get_data import prep_data, scale_data
@@ -37,6 +35,9 @@ from predictionnet.base.miner import BaseMinerNeuron
 # ML imports
 import tensorflow
 import numpy as np
+from tensorflow.keras.models import load_model
+
+import os
 
 class Miner(BaseMinerNeuron):
     """
@@ -52,6 +53,8 @@ class Miner(BaseMinerNeuron):
         print(config)
         # TODO(developer): Anything specific to your use case you can do here
         self.model_dir = f'./mining_models/{self.config.model}'
+        if self.config.neuron.device == 'cpu':
+            os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # This will force TensorFlow to use CPU only
 
     async def blacklist(
         self, synapse: predictionnet.protocol.Challenge
