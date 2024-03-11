@@ -10,7 +10,7 @@ setuptools
 starlette
 ta
 template
-tensorflow
+tensorflow==2.15.0
 torch
 transformers
 yfinance
