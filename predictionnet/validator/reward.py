@@ -98,7 +98,7 @@ def get_rewards(
 
     current_time_adjusted = rounded_up_time - timedelta(minutes=10)
 
-    data = ticker.history(start=current_time_adjusted, end=timestamp, interval='5m')
+    data = ticker.history(start=current_time_adjusted, end=rounded_up_time, interval='5m')
     close_price = data['Close'].iloc[-1]
    
     bt.logging.info("Revealing close price for this interval: ", close_price)
