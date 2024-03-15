@@ -61,7 +61,7 @@ source .sn28/bin/activate
 ```
 Clone the Foundry S&P 500 Oracle repo:
 ```
-git clone https://github.com/teast21/snpOracle.git
+git clone https://github.com/foundryservices/snpOracle.git
 ```
 Install Requirements:
 ```

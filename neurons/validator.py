@@ -74,10 +74,25 @@ class Validator(BaseValidatorNeuron):
         # TODO(developer): Rewrite this function based on your protocol definition.
         return await forward(self)
 
+    def print_info(self):
+        metagraph = self.metagraph
+        self.uid = self.metagraph.hotkeys.index(self.wallet.hotkey.ss58_address)
+
+        log = (
+            "Validator | "
+            f"Step:{self.step} | "
+            f"UID:{self.uid} | "
+            f"Block:{self.block} | "
+            f"Stake:{metagraph.S[self.uid]} | "
+            f"VTrust:{metagraph.Tv[self.uid]} | "
+            f"Dividend:{metagraph.D[self.uid]} | "
+            f"Emission:{metagraph.E[self.uid]}"
+        )
+        bt.logging.info(log)
 
 # The main function parses the configuration and runs the validator.
 if __name__ == "__main__":
     with Validator() as validator:
         while True:
-            bt.logging.info("Validator running...", time.time())
-            time.sleep(5)
+            validator.print_info()
+            time.sleep(15)

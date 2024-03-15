@@ -1,4 +1,4 @@
-bittensor==6.9.2
+bittensor==6.9.3
 loguru
 numpy
 pandas
