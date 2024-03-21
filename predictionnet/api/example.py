@@ -14,7 +14,7 @@ async def test_prediction():
     wallet = bt.wallet()
 
     # Fetch the axons of the available API nodes, or specify UIDs directly
-    metagraph = bt.subtensor("local").metagraph(netuid=28)
+    metagraph = bt.subtensor("finney").metagraph(netuid=28)
 
     uids = [
         uid.item()
