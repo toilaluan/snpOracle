@@ -110,7 +110,13 @@ async def test_prediction():
             # Miner not found, insert miner:
             insert_result = cursor.execute(
                 insert_miner_query,
-                ("hot_key", "cold_key", export_dict["UID"], True, export_dict["rank"]),
+                (
+                    export_dict["hotKey"],
+                    export_dict["coldKey"],
+                    export_dict["UID"],
+                    True,
+                    export_dict["rank"],
+                ),
             )
             connection.commit()
         else:
@@ -121,7 +127,7 @@ async def test_prediction():
                     export_dict["UID"],
                     True,
                     export_dict["rank"],
-                    export_dict["coldKey"],
+                    export_dict["hotKey"],
                     export_dict["coldKey"],
                 ),
             )
