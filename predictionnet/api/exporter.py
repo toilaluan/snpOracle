@@ -91,7 +91,7 @@ async def test_prediction():
     cursor = connection.cursor()
     for i in range(len(retrieve_response)):
         export_dict = {}
-        export_dict["UID"] = uids[i]
+        export_dict["UID"] = str(uids[i])
         export_dict["prediction"] = retrieve_response[i]
         export_dict["rank"] = ranks[uids[i]].item()
         export_dict["hotKey"] = hk[uids[i]]
