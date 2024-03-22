@@ -106,7 +106,7 @@ async def test_prediction():
             (export_dict["hotKey"], export_dict["coldKey"]),
         )
         result = cursor.fetchall()
-        if len(result) < 0:
+        if len(result) == 0:
             # Miner not found, insert miner:
             insert_result = cursor.execute(
                 insert_miner_query,
@@ -151,7 +151,7 @@ async def test_prediction():
         # Insert the prediction:
         cursor.execute(
             insert_prediction_query,
-            (export_dict["prediction"], datetime.datetime.now(), updated_miner[0][0]),
+            (export_dict["prediction"], datetime.datetime.now(), updated_miner[0]),
         )
         connection.commit()
 
