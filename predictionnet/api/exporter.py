@@ -21,13 +21,13 @@ find_miner_by_hot_key_cold_key = sql.SQL(
     "SELECT * FROM miners_table WHERE hot_key = %s AND cold_key = %s"
 )
 update_miner_by_hot_key_cold_key = sql.SQL(
-    "UPDATE miners_table SET uid = %s, is_current_uid = %s, rank = %s WHERE hot_key = %s AND cold_key = %s"
+    "UPDATE miners_table SET uid = %s, is_current_uid = %s, rank = %s, trust = %s WHERE hot_key = %s AND cold_key = %s"
 )
 update_miner_uid_to_false_by_hot_key_cold_key = sql.SQL(
     "UPDATE miners_table SET is_current_uid = %s WHERE NOT hot_key = %s AND NOT cold_key = %s AND uid=%s"
 )
 insert_miner_query = sql.SQL(
-    "INSERT INTO miners_table (hot_key, cold_key, uid, is_current_uid, rank) VALUES (%s, %s, %s, %s, %s)"
+    "INSERT INTO miners_table (hot_key, cold_key, uid, is_current_uid, rank, trust) VALUES (%s, %s, %s, %s, %s, %s)"
 )
 insert_prediction_query = sql.SQL(
     "INSERT INTO predictions_table (prediction, timestamp, miner_id) VALUES (%s, %s, %s)"
@@ -58,7 +58,7 @@ def create_connection(conn_str):
 async def test_prediction():
 
     wallet = bt.wallet()
-    
+
     # Fetch the axons of the available API nodes, or specify UIDs directly
     metagraph = bt.subtensor("local").metagraph(netuid=28)
 
@@ -118,6 +118,7 @@ async def test_prediction():
                     export_dict["UID"],
                     True,
                     export_dict["rank"],
+                    export_dict["trust"],
                 ),
             )
             connection.commit()
@@ -129,6 +130,7 @@ async def test_prediction():
                     export_dict["UID"],
                     True,
                     export_dict["rank"],
+                    export_dict["trust"],
                     export_dict["hotKey"],
                     export_dict["coldKey"],
                 ),
