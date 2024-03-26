@@ -155,7 +155,11 @@ async def test_prediction():
         # Insert the prediction:
         cursor.execute(
             insert_prediction_query,
-            (export_dict["prediction"], datetime.datetime.now(), updated_miner[0]),
+            (
+                export_dict["prediction"],
+                datetime.datetime.now().isoformat(),
+                updated_miner[0],
+            ),
         )
         connection.commit()
 
