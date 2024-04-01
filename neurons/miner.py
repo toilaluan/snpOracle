@@ -179,10 +179,13 @@ class Miner(BaseMinerNeuron):
 
         # logic to ensure that only past 20 day context exists in synapse
         synapse.prediction = prediction
-        
-        bt.logging.success(
-            f"Predicted price 🎯: {synapse.prediction}"
-        )
+
+        if(synapse.prediction != None):
+            bt.logging.success(
+                f"Predicted price 🎯: {synapse.prediction}"
+            )
+        else:
+            bt.logging.info("No price predicted for this request.")
 
         return synapse
 

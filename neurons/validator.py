@@ -17,7 +17,9 @@
 
 import time
 from datetime import datetime, timedelta
+import pandas_market_calendars as mcal
 import yfinance as yf
+import pytz
 
 # Bittensor
 import bittensor as bt
@@ -48,19 +50,36 @@ class Validator(BaseValidatorNeuron):
         # TODO(developer): Anything specific to your use case you can do here
         
     
-    async def is_market_open(self, time):
-        ny_open_time = time.replace(hour=9, minute=30, second=0, microsecond=0)
-        ny_close_time = time.replace(hour=16, minute=0, second=0, microsecond=0)
+    async def is_market_open(unix_time):
+        # Convert Unix timestamp to datetime in UTC
+        time = datetime.utcfromtimestamp(unix_time).replace(tzinfo=pytz.utc)
 
-        if time.weekday() < 5 and ny_open_time <= time <= ny_close_time:
-            ticker_symbol = '^GSPC'
-            ticker = yf.Ticker(ticker_symbol)
-            adjusted = time - timedelta(minutes=10)
-            data = ticker.history(start=adjusted, end=time, interval='5m')
-            if len(data) > 0:
-                return True
-        else:
-            return False
+        if time.weekday() < 5:  # Check if it's a weekday
+            # Create a market calendar for NYSE
+            nyse = mcal.get_calendar('NYSE')
+
+            # Convert `time` to 'America/New_York' before checking the schedule
+            ny_time = time.astimezone(pytz.timezone('America/New_York'))
+            #print(ny_time)
+            # Check if the current date is a holiday or a market day
+            schedule = nyse.schedule(start_date=ny_time.date(), end_date=ny_time.date())
+            
+            if not schedule.empty:
+                market_open = schedule.iloc[0]['market_open']
+                market_close = schedule.iloc[0]['market_close']
+
+                # Check if current time is within market hours
+                if market_open <= ny_time <= market_close:
+                    #print(ny_time)
+                    ticker_symbol = '^GSPC'
+                    ticker = yf.Ticker(ticker_symbol)
+                    adjusted = ny_time - timedelta(minutes=35)
+                    data = ticker.history(start=adjusted, end=ny_time, interval='5m')
+                    
+                    return len(data) > 0
+
+        bt.logging.info(f"Market Closed today")
+        return False
 
     async def forward(self):
         """
