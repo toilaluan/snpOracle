@@ -17,7 +17,7 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-import typing
+from typing import Optional, List
 import bittensor as bt
 import pydantic
 from datetime import datetime
@@ -61,10 +61,10 @@ class Challenge(bt.Synapse):
         allow_mutation=False,
     )
     # Optional request output, filled by recieving axon.
-    prediction: typing.Optional[float] = pydantic.Field(
-        default=None,
-        title="Prediction",
-        description="Prediction for closing price of S&P 500"
+    prediction: Optional[List[float]] = pydantic.Field(
+        default=[None, None, None, None, None, None],
+        title="Predictions",
+        description="Next 6 5m candles' predictions for closing price of S&P 500"
     )
 
     def deserialize(self) -> int:
