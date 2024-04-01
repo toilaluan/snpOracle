@@ -9,10 +9,10 @@ import pandas as pd
 from pytz import timezone
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import load_model
-from base_miner.model import create_and_save_base_model_lstm, create_and_save_base_model_regression
+from model import create_and_save_base_model_lstm, create_and_save_base_model_regression
 
 # import custom defined files
-from base_miner.get_data import prep_data, scale_data, round_down_time
+from get_data import prep_data, scale_data, round_down_time
 
 
 def predict(timestamp:datetime, scaler:MinMaxScaler, model, type) -> float:
@@ -79,12 +79,13 @@ if(__name__=='__main__'):
     #mse = create_and_save_base_model_regression(scaler, X, y)
 
     #model = joblib.load('mining_models/base_linear_regression.joblib')
-    model = load_model('mining_models/base_lstm.h5')
+    #
     ny_timezone = timezone('America/New_York')
     current_time_ny = datetime.now(ny_timezone)
     timestamp = current_time_ny.isoformat()
 
-    #mse = create_and_save_base_model(scaler, X, y)
+    mse = create_and_save_base_model_lstm(scaler, X, y)
+    model = load_model('mining_models/base_lstm_new.h5')
     prediction = predict(timestamp, scaler, model, type='lstm')
     print(prediction)
     

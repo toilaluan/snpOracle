@@ -34,7 +34,7 @@ def create_and_save_base_model_lstm(scaler:MinMaxScaler, X_scaled:np.ndarray, y_
         :returns: The MSE of the model on the test data
         :rtype: float
     """
-    model_name = "mining_models/base_lstm"
+    model_name = "mining_models/base_lstm_new"
 
     # Reshape input for LSTM
     X_scaled = X_scaled.reshape((X_scaled.shape[0], 1, X_scaled.shape[1]))
@@ -50,7 +50,7 @@ def create_and_save_base_model_lstm(scaler:MinMaxScaler, X_scaled:np.ndarray, y_
     model.add(Dropout(0.2))
     model.add(LSTM(units=50, return_sequences=False))
     model.add(Dropout(0.2))
-    model.add(Dense(units=1))
+    model.add(Dense(units=6))
 
     # Compile the model
     model.compile(optimizer='adam', loss='mean_squared_error')
@@ -65,7 +65,7 @@ def create_and_save_base_model_lstm(scaler:MinMaxScaler, X_scaled:np.ndarray, y_
 
     # Rescale back to original range
     predicted_prices = scaler.inverse_transform(predicted_prices)
-    y_test_rescaled = scaler.inverse_transform(y_test.reshape(-1, 1))
+    y_test_rescaled = scaler.inverse_transform(y_test.reshape(-1, 6))
 
     # Evaluate
     mse = mean_squared_error(y_test_rescaled, predicted_prices)
