@@ -59,21 +59,18 @@ def reward(response: Challenge, close_price: float) -> float:
 
     Returns:
     - float: The reward value for the miner.
-    """    
-    try:
-        prediction_array = np.array(response.prediction)
-        close_price_array = np.array(close_price)
+    """
+    prediction_array = np.array(response.prediction)
+    close_price_array = np.array(close_price)
 
-        mse = mean_squared_error(prediction_array, close_price_array)
-        directional_accuracy = get_direction_accuracy(close_price_array, prediction_array)
+    mse = mean_squared_error(prediction_array, close_price_array)
+    directional_accuracy = get_direction_accuracy(close_price_array, prediction_array)
 
-        # subtracting dir accuracy from 100 because the goal is to reward those that make quality predictions for longer durations
-        # If the reward function gives a higher value, the weights will be
-        # lower since the result from this is subtracted from 1 subsequently
-        return 0.5(mse**0.5 + (100 - directional_accuracy))
-    
-    except ValueError:
-        return 1000000.0
+    # subtracting dir accuracy from 100 because the goal is to reward those that make quality predictions for longer durations
+    # If the reward function gives a higher value, the weights will be
+    # lower since the result from this is subtracted from 1 subsequently
+    return 0.5(mse**0.5 + (100 - directional_accuracy))
+
 
 # Query prob editied to query: Protocol defined synapse
 # For this method mostly should defer to Rahul/Tommy
@@ -107,7 +104,7 @@ def get_rewards(
     # Round up current timestamp and then wait until that time has been hit
     rounded_up_time = timestamp - timedelta(minutes=timestamp.minute % INTERVAL,
                                     seconds=timestamp.second,
-                                    microseconds=timestamp.microsecond) + timedelta(minutes=5, seconds=30)
+                                    microseconds=timestamp.microsecond) + timedelta(minutes=INTERVAL, seconds=30)
     
     ny_timezone = timezone('America/New_York')
 
@@ -123,7 +120,7 @@ def get_rewards(
     bt.logging.info("Revealing close price for this interval: ", close_price)
 
     # Get all the reward results by iteratively calling your reward() function.
-    scoring = [reward(response, close_price) for response in responses]
+    scoring = [reward(response, close_price) if response.prediction!=None else 0 for response in responses]
     worst_loss = max(scoring)
     scoring = [1 - (score / worst_loss) for score in scoring]
     return torch.FloatTensor(scoring)
