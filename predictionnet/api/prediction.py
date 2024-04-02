@@ -38,8 +38,8 @@ class PredictionAPI(SubnetsAPI):
     ) -> List[int]:
         outputs = []
         for response in responses:
-            print(response)
             if response.dendrite.status_code != 200:
-                continue
-            outputs.append(response.prediction)
+                outputs.append(None)
+            else:
+                outputs.append(response.prediction)
         return outputs

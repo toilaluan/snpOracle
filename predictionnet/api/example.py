@@ -15,12 +15,19 @@ async def test_prediction():
 
     # Fetch the axons of the available API nodes, or specify UIDs directly
     metagraph = bt.subtensor("finney").metagraph(netuid=28)
-    axons = await get_query_api_axons(wallet=wallet, metagraph=metagraph, uids=[89, 96, 97])
+
+    uids = [
+        uid.item()
+        for uid in metagraph.uids
+        if metagraph.trust[uid] > 0
+    ]
+
+    axons = await get_query_api_axons(wallet=wallet, metagraph=metagraph, uids=uids)
 
     # Store some data!
-    ny_timezone = timezone('America/New_York')
-    current_time_ny = datetime.now(ny_timezone)
-    timestamp = current_time_ny.isoformat()
+    # Read timestamp from the text file
+    with open('timestamp.txt', 'r') as file:
+        timestamp = file.read()
 
     bt.logging.info(f"Sending {timestamp} to predict a price.")
     retrieve_handler = PredictionAPI(wallet)
@@ -28,10 +35,12 @@ async def test_prediction():
         axons=axons,
         # Arugmnts for the proper synapse
         timestamp=timestamp, 
-        timeout=60
+        timeout=120
     )
     print(retrieve_response)
-
+    print(uids)
+    print(len(retrieve_response))
+    print(len(uids))
 
 if __name__ == "__main__":
     import asyncio
