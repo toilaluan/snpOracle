@@ -87,7 +87,7 @@ if(__name__=='__main__'):
     mse = create_and_save_base_model_lstm(scaler, X, y)
     model = load_model('mining_models/base_lstm_new.h5')
     prediction = predict(timestamp, scaler, model, type='lstm')
-    print(prediction)
+    print(prediction[0])
     
 
 
