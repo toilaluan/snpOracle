@@ -120,7 +120,7 @@ def get_rewards(
     bt.logging.info("Revealing close price for this interval: ", close_price)
 
     # Get all the reward results by iteratively calling your reward() function.
-    scoring = [reward(response, close_price) if response.prediction!=None else 0 for response in responses]
+    scoring = [reward(response, close_price) if None not in response.prediction else 0 for response in responses]
     worst_loss = max(scoring)
     scoring = [1 - (score / worst_loss) for score in scoring]
     return torch.FloatTensor(scoring)
