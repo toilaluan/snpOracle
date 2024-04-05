@@ -48,7 +48,7 @@ def get_direction_accuracy(close_price_array, prediction_array):
     correct_predictions = sum(1 for i in range(len(actual_directions)) if actual_directions[i] == predicted_directions[i])
 
     # Calculate directional accuracy
-    directional_accuracy = (correct_predictions/len(actual_directions))*100
+    directional_accuracy = (correct_predictions/len(actual_directions)-1)*100
 
     return directional_accuracy
 
@@ -69,8 +69,7 @@ def reward(response: Challenge, close_price: float) -> float:
     # subtracting dir accuracy from 100 because the goal is to reward those that make quality predictions for longer durations
     # If the reward function gives a higher value, the weights will be
     # lower since the result from this is subtracted from 1 subsequently
-    return 0.5(mse**0.5 + (100 - directional_accuracy))
-
+    return 0.5*(mse**0.5 + (100 - directional_accuracy))
 
 # Query prob editied to query: Protocol defined synapse
 # For this method mostly should defer to Rahul/Tommy
@@ -115,14 +114,16 @@ def get_rewards(
     current_time_adjusted = rounded_up_time - timedelta(minutes=INTERVAL + 5)
 
     data = ticker.history(start=current_time_adjusted, end=rounded_up_time, interval='5m')
-    close_price = data['Close'].iloc[-6:-1]
-   
-    bt.logging.info("Revealing close price for this interval: ", close_price)
+    close_price = data['Close'].iloc[-7:-1].tolist()
+    close_price_revealed = ' '.join(str(price) for price in close_price)
+
+    bt.logging.info(f"Revealing close prices for this interval: {close_price_revealed}")
 
     # Get all the reward results by iteratively calling your reward() function.
-    scoring = [reward(response, close_price) if None not in response.prediction else 0 for response in responses]
+    scoring = [reward(response, close_price) if response.prediction != None else 0 for response in responses]
     worst_loss = max(scoring)
-    scoring = [1 - (score / worst_loss) for score in scoring]
+    bt.logging.debug(worst_loss)
+    scoring = [1 - (score / worst_loss) if score != 0 else 0 for score in scoring]
     return torch.FloatTensor(scoring)
 
     #scaler = MinMaxScaler(feature_range=(0,1))

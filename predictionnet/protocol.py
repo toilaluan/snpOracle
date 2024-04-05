@@ -62,7 +62,7 @@ class Challenge(bt.Synapse):
     )
     # Optional request output, filled by recieving axon.
     prediction: Optional[List[float]] = pydantic.Field(
-        default=[None, None, None, None, None, None],
+        default=None,
         title="Predictions",
         description="Next 6 5m candles' predictions for closing price of S&P 500"
     )

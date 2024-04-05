@@ -50,9 +50,9 @@ class Validator(BaseValidatorNeuron):
         # TODO(developer): Anything specific to your use case you can do here
         
     
-    async def is_market_open(unix_time):
+    async def is_market_open(self, time):
         # Convert Unix timestamp to datetime in UTC
-        time = datetime.utcfromtimestamp(unix_time).replace(tzinfo=pytz.utc)
+        #time = datetime.utcfromtimestamp(unix_time).replace(tzinfo=pytz.utc)
 
         if time.weekday() < 5:  # Check if it's a weekday
             # Create a market calendar for NYSE
