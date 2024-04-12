@@ -64,7 +64,7 @@ async def forward(self):
     
 
     #miner_uids = get_random_uids(self, k=min(self.config.neuron.sample_size, self.metagraph.n.item()))
-    miner_uids = [1, 42]
+    miner_uids = [1, 42, 47]
     # Here input data should be gathered to send to the miners
     # TODO(create get_input_data())
     

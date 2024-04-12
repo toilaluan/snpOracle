@@ -103,17 +103,23 @@ def get_rewards(
     # Round up current timestamp and then wait until that time has been hit
     rounded_up_time = timestamp - timedelta(minutes=timestamp.minute % INTERVAL,
                                     seconds=timestamp.second,
-                                    microseconds=timestamp.microsecond) + timedelta(minutes=INTERVAL, seconds=30)
+                                    microseconds=timestamp.microsecond) + timedelta(minutes=INTERVAL + 5, seconds=30)
     
     ny_timezone = timezone('America/New_York')
 
-    while (datetime.now(ny_timezone) < rounded_up_time):
+    while (datetime.now(ny_timezone) < rounded_up_time - timedelta(minutes=4, seconds=30)):
         bt.logging.info(f"Waiting for next {INTERVAL}m interval...")
         time.sleep(15)
 
     current_time_adjusted = rounded_up_time - timedelta(minutes=INTERVAL + 5)
-
-    data = ticker.history(start=current_time_adjusted, end=rounded_up_time, interval='5m')
+    print(rounded_up_time, rounded_up_time.hour, rounded_up_time.minute, current_time_adjusted)
+    if(rounded_up_time.hour==16 and rounded_up_time.minute==5):
+        data = yf.download(tickers=ticker_symbol, period='1d', interval='5m')
+        bt.logging.info("Last reward iteration of the day")
+    else:
+        data = ticker.history(start=current_time_adjusted, end=rounded_up_time, interval='5m')
+    
+    bt.logging.info(data.iloc[-7:-1])
     close_price = data['Close'].iloc[-7:-1].tolist()
     close_price_revealed = ' '.join(str(price) for price in close_price)
 
