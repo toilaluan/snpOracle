@@ -10,6 +10,15 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout
+import os
+from dotenv import load_dotenv
+from huggingface_hub import HfApi
+
+load_dotenv()
+
+if not os.getenv("HF_ACCESS_TOKEN"):
+    print("Cannot find a Huggingface Access Token - unable to upload model to Huggingface.")
+token = os.getenv("HF_ACCESS_TOKEN")
 
 def create_and_save_base_model_lstm(scaler:MinMaxScaler, X_scaled:np.ndarray, y_scaled:np.ndarray) -> float:
     """
@@ -58,6 +67,15 @@ def create_and_save_base_model_lstm(scaler:MinMaxScaler, X_scaled:np.ndarray, y_
     # Train the model
     model.fit(X_train, y_train, epochs=100, batch_size=32)
     model.save(f'{model_name}.h5')
+
+    api = HfApi()
+    api.upload_file(
+        path_or_fileobj="mining_models/base_lstm_new.h5",
+        path_in_repo=f"{model_name}.h5",
+        repo_id="foundryservices/bittensor-sn28-base-lstm",
+        repo_type="model",
+        token=token
+    )
 
     # Predict the prices - this is just for a local test, this prediction just allows
     # miners to assess the performance of their models on real data.
