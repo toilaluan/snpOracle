@@ -113,12 +113,10 @@ def get_rewards(
 
     current_time_adjusted = rounded_up_time - timedelta(minutes=INTERVAL + 5)
     print(rounded_up_time, rounded_up_time.hour, rounded_up_time.minute, current_time_adjusted)
-    if(rounded_up_time.hour==16 and rounded_up_time.minute==5):
-        data = yf.download(tickers=ticker_symbol, period='1d', interval='5m')
-        bt.logging.info("Last reward iteration of the day")
-    else:
-        data = ticker.history(start=current_time_adjusted, end=rounded_up_time, interval='5m')
     
+    data = yf.download(tickers=ticker_symbol, period='1d', interval='5m')
+    bt.logging.info("Procured data from yahoo finance.")
+
     bt.logging.info(data.iloc[-7:-1])
     close_price = data['Close'].iloc[-7:-1].tolist()
     close_price_revealed = ' '.join(str(price) for price in close_price)
