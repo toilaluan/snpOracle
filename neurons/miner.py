@@ -43,10 +43,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-if not os.getenv("HF_ACCESS_TOKEN"):
-    print("Cannot find a Huggingface Access Token - unable to upload model to Huggingface.")
-token = os.getenv("HF_ACCESS_TOKEN")
-
 class Miner(BaseMinerNeuron):
     """
     Your miner neuron class. You should use this class to define your miner's behavior. In particular, you should replace the forward function with your own logic. You may also want to override the blacklist and priority functions according to your needs.
@@ -179,6 +175,9 @@ class Miner(BaseMinerNeuron):
             model_path = f'./{self.config.model}'
             bt.logging.info(f"Model weights file from a local folder will be loaded - Local weights file path: {self.config.model}")
         else:
+            if not os.getenv("HF_ACCESS_TOKEN"):
+                print("Cannot find a Huggingface Access Token - model download halted.")
+            token = os.getenv("HF_ACCESS_TOKEN")
             model_path = hf_hub_download(repo_id=self.config.hf_repo_id, filename=self.config.model, use_auth_token=token)
             bt.logging.info(f"Model downloaded from huggingface at {model_path}")
 
