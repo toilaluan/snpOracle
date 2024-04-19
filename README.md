@@ -115,6 +115,24 @@ module.exports = {
 };
 ```
 
+### Running Miner/Validator in Docker
+As an alternative to using pm2, a docker image has been pushed to docker hub that can be used in accordance with docker-compose.yml, or the image can be built locally using the Dockerfile in this repo. To prepare the docker compose file, make the following changes to the compose script:
+```
+version: '3.7'
+
+services:
+  my_container:
+    image: zrross11/snporacle:1.0.4
+    container_name: subnet28-<MINER OR VALIDATOR>
+    network_mode: host
+    volumes:
+      - /home/ubuntu/.bittensor:/root/.bittensor
+    restart: always
+    command: "python ./neurons/<MINER OR VALIDATOR>.py --wallet.name <YOUR WALLET NAME> --wallet.hotkey <YOUR WALLET HOTKEY> --netuid 28 --axon.port <YOUR AXON PORT> --subtensor.network local --subtensor.chain_endpoint 127.0.0.1:9944 --logging.debug"
+```
+
+Once this is ready, run ```docker compose up -d``` in the base directory
+
 ## About the Rewards Mechanism
 
 The simplicity of the rewards mechanism is quite intentional. There are no methods to require a machine learning model be run by the miners. This is because the nature of the problem is such that machine learning models will inherently perform better than any method of gamification. By effectively performing a commit-reveal on a future S&P Price Prediction, S&P Oracle ensures that only well-tuned models will survive. 
