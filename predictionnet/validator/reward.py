@@ -127,7 +127,7 @@ def get_rewards(
     scoring = [reward(response, close_price) if response.prediction != None else 0 for response in responses]
     worst_loss = max(scoring)
     bt.logging.debug(worst_loss)
-    scoring = [1 - (score / worst_loss) if score != 0 else 0 for score in scoring]
+    scoring = [1 - (score / (worst_loss + 5)) if score != 0 else 0 for score in scoring] #constant 5 is added so that models with worst loss don't get 0 rewards
     return torch.FloatTensor(scoring)
 
     #scaler = MinMaxScaler(feature_range=(0,1))
