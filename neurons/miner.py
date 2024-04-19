@@ -181,6 +181,7 @@ class Miner(BaseMinerNeuron):
         else:
             model_path = hf_hub_download(repo_id=self.config.hf_repo_id, filename=self.config.model, use_auth_token=token)
             bt.logging.info(f"Model downloaded from huggingface at {model_path}")
+            print(load_model(model_path).summary())
 
         model = load_model(model_path)
         data = prep_data()
@@ -196,7 +197,7 @@ class Miner(BaseMinerNeuron):
         # logic to ensure that only past 20 day context exists in synapse
         synapse.prediction = list(prediction[0])
 
-        if(synapse.prediction != [None]*6):
+        if(synapse.prediction != None):
             bt.logging.success(
                 f"Predicted price 🎯: {synapse.prediction}"
             )
@@ -232,5 +233,4 @@ if __name__ == "__main__":
         while True:
             miner.print_info()
             time.sleep(15)
-
 
