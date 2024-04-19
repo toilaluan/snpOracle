@@ -181,7 +181,6 @@ class Miner(BaseMinerNeuron):
         else:
             model_path = hf_hub_download(repo_id=self.config.hf_repo_id, filename=self.config.model, use_auth_token=token)
             bt.logging.info(f"Model downloaded from huggingface at {model_path}")
-            print(load_model(model_path).summary())
 
         model = load_model(model_path)
         data = prep_data()
