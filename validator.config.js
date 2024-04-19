@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'validator',
       script: 'python3',
-      args: './neurons/validator.py --netuid 93 --logging.debug --logging.trace --subtensor.network test --wallet.name testValidator --wallet.hotkey default'
+      args: './neurons/validator.py --netuid 28 --logging.debug --logging.trace --subtensor.network local --wallet.name walletName --wallet.hotkey hotkeyName'
     },
   ],
 };
