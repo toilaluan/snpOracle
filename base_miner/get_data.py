@@ -41,7 +41,8 @@ def prep_data(drop_na:bool = True) -> DataFrame:
     data['RSI'] = ta.momentum.RSIIndicator(data['Close']).rsi()
     data['CCI'] = ta.trend.CCIIndicator(data['High'], data['Low'], data['Close']).cci()
     data['Momentum'] = ta.momentum.ROCIndicator(data['Close']).roc()
-    data['NextClose'] = data['Close'].shift(-1)
+    for i in range(1,7):
+        data[f'NextClose{i}'] = data['Close'].shift(-1*i)
 
     # Drop NaN values
     if(drop_na):
@@ -98,11 +99,13 @@ def scale_data(data:DataFrame) -> Tuple[MinMaxScaler, np.ndarray, np.ndarray]:
     X = data[['Open', 'High', 'Low', 'Volume', 'SMA_50', 'SMA_200', 'RSI', 'CCI', 'Momentum']].values
 
     # Prepare target variable
-    y = data[['NextClose']].values
+    y = data[['NextClose1', 'NextClose2', 'NextClose3', 'NextClose4', 'NextClose5', 'NextClose6']].values
+
+    y = y.reshape(-1, 6)
 
     # Scale features
     scaler = MinMaxScaler(feature_range=(0, 1))
     X_scaled = scaler.fit_transform(X)
-    y_scaled = scaler.fit_transform(y.reshape(-1, 1)).reshape(-1)
+    y_scaled = scaler.fit_transform(y)
 
     return scaler, X_scaled, y_scaled

@@ -69,6 +69,7 @@ def predict(timestamp:datetime, scaler:MinMaxScaler, model, type) -> float:
     if(type!='regression'):
         prediction = scaler.inverse_transform(prediction.reshape(1,-1))
 
+    print(prediction)
     return prediction
 
 # Uncomment this section if you wanna do a local test without having to run the miner
@@ -79,14 +80,15 @@ if(__name__=='__main__'):
     #mse = create_and_save_base_model_regression(scaler, X, y)
 
     #model = joblib.load('mining_models/base_linear_regression.joblib')
-    model = load_model('mining_models/base_lstm.h5')
+    #
     ny_timezone = timezone('America/New_York')
     current_time_ny = datetime.now(ny_timezone)
     timestamp = current_time_ny.isoformat()
 
-    #mse = create_and_save_base_model(scaler, X, y)
+    mse = create_and_save_base_model_lstm(scaler, X, y)
+    model = load_model('mining_models/base_lstm_new.h5')
     prediction = predict(timestamp, scaler, model, type='lstm')
-    print(prediction)
+    print(prediction[0])
     
 
 

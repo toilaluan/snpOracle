@@ -36,7 +36,22 @@ from sklearn.preprocessing import MinMaxScaler
 #     squared_error = (prediction_arr - close_price) ** 2
 #     rmse = squared_error ** 0.5
 #     return rmse
-    
+
+INTERVAL = 30
+
+def get_direction_accuracy(close_price_array, prediction_array):
+    # Calculate the direction of changes (up: 1, down: -1)
+    actual_directions = [1 if close_price_array[i] > close_price_array[i - 1] else -1 for i in range(1, len(close_price_array))]
+    predicted_directions = [1 if prediction_array[i] > prediction_array[i - 1] else -1 for i in range(1, len(prediction_array))]
+
+    # Calculate the number of times the predicted direction matches the actual direction
+    correct_predictions = sum(1 for i in range(len(actual_directions)) if actual_directions[i] == predicted_directions[i])
+
+    # Calculate directional accuracy
+    directional_accuracy = (correct_predictions/len(actual_directions)-1)*100
+
+    return directional_accuracy
+
 def reward(response: Challenge, close_price: float) -> float:
     """
     Reward the miner response to the dummy request. This method returns a reward
@@ -44,17 +59,17 @@ def reward(response: Challenge, close_price: float) -> float:
 
     Returns:
     - float: The reward value for the miner.
-    """    
-    try:
-        prediction_array = np.array([response.prediction])
-        close_price_array = np.array([close_price])
+    """
+    prediction_array = np.array(response.prediction)
+    close_price_array = np.array(close_price)
 
-        mse = mean_squared_error(prediction_array, close_price_array)
-        
-        return mse**0.5
-    
-    except ValueError:
-        return 100000.0
+    mse = mean_squared_error(prediction_array, close_price_array)
+    directional_accuracy = get_direction_accuracy(close_price_array, prediction_array)
+
+    # subtracting dir accuracy from 100 because the goal is to reward those that make quality predictions for longer durations
+    # If the reward function gives a higher value, the weights will be
+    # lower since the result from this is subtracted from 1 subsequently
+    return 0.5*(mse**0.5 + (100 - directional_accuracy))
 
 # Query prob editied to query: Protocol defined synapse
 # For this method mostly should defer to Rahul/Tommy
@@ -86,27 +101,33 @@ def get_rewards(
     timestamp = datetime.fromisoformat(timestamp)
 
     # Round up current timestamp and then wait until that time has been hit
-    rounded_up_time = timestamp - timedelta(minutes=timestamp.minute % 5,
+    rounded_up_time = timestamp - timedelta(minutes=timestamp.minute % INTERVAL,
                                     seconds=timestamp.second,
-                                    microseconds=timestamp.microsecond) + timedelta(minutes=5, seconds=30)
+                                    microseconds=timestamp.microsecond) + timedelta(minutes=INTERVAL + 5, seconds=30)
     
     ny_timezone = timezone('America/New_York')
 
-    while (datetime.now(ny_timezone) < rounded_up_time):
-        bt.logging.info("Waiting for next 5m interval...")
+    while (datetime.now(ny_timezone) < rounded_up_time - timedelta(minutes=4, seconds=30)):
+        bt.logging.info(f"Waiting for next {INTERVAL}m interval...")
         time.sleep(15)
 
-    current_time_adjusted = rounded_up_time - timedelta(minutes=10)
+    current_time_adjusted = rounded_up_time - timedelta(minutes=INTERVAL + 5)
+    print(rounded_up_time, rounded_up_time.hour, rounded_up_time.minute, current_time_adjusted)
+    
+    data = yf.download(tickers=ticker_symbol, period='1d', interval='5m')
+    bt.logging.info("Procured data from yahoo finance.")
 
-    data = ticker.history(start=current_time_adjusted, end=rounded_up_time, interval='5m')
-    close_price = data['Close'].iloc[-1]
-   
-    bt.logging.info("Revealing close price for this interval: ", close_price)
+    bt.logging.info(data.iloc[-7:-1])
+    close_price = data['Close'].iloc[-7:-1].tolist()
+    close_price_revealed = ' '.join(str(price) for price in close_price)
+
+    bt.logging.info(f"Revealing close prices for this interval: {close_price_revealed}")
 
     # Get all the reward results by iteratively calling your reward() function.
-    scoring = [reward(response, close_price) for response in responses]
+    scoring = [reward(response, close_price) if response.prediction != None else 0 for response in responses]
     worst_loss = max(scoring)
-    scoring = [1 - (score / worst_loss) for score in scoring]
+    bt.logging.debug(worst_loss)
+    scoring = [1 - (score / (worst_loss + 5)) if score != 0 else 0 for score in scoring] #constant 5 is added so that models with worst loss don't get 0 rewards
     return torch.FloatTensor(scoring)
 
     #scaler = MinMaxScaler(feature_range=(0,1))

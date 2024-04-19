@@ -36,8 +36,12 @@ from predictionnet.base.miner import BaseMinerNeuron
 import tensorflow
 import numpy as np
 from tensorflow.keras.models import load_model
+from huggingface_hub import hf_hub_download
 
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class Miner(BaseMinerNeuron):
     """
@@ -52,7 +56,7 @@ class Miner(BaseMinerNeuron):
         super(Miner, self).__init__(config=config)
         print(config)
         # TODO(developer): Anything specific to your use case you can do here
-        self.model_dir = f'./mining_models/{self.config.model}'
+        self.model_loc = self.config.model
         if self.config.neuron.device == 'cpu':
             os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # This will force TensorFlow to use CPU only
 
@@ -166,7 +170,18 @@ class Miner(BaseMinerNeuron):
 
         timestamp = synapse.timestamp
 
-        model = load_model(self.model_dir)
+        # Download the file
+        if(self.config.hf_repo_id==""):
+            model_path = f'./{self.config.model}'
+            bt.logging.info(f"Model weights file from a local folder will be loaded - Local weights file path: {self.config.model}")
+        else:
+            if not os.getenv("HF_ACCESS_TOKEN"):
+                print("Cannot find a Huggingface Access Token - model download halted.")
+            token = os.getenv("HF_ACCESS_TOKEN")
+            model_path = hf_hub_download(repo_id=self.config.hf_repo_id, filename=self.config.model, use_auth_token=token)
+            bt.logging.info(f"Model downloaded from huggingface at {model_path}")
+
+        model = load_model(model_path)
         data = prep_data()
         scaler, _, _ = scale_data(data)
         #mse = create_and_save_base_model_lstm(scaler, X, y)
@@ -178,11 +193,14 @@ class Miner(BaseMinerNeuron):
         #pred_np_array = np.array(prediction).reshape(-1, 1)
 
         # logic to ensure that only past 20 day context exists in synapse
-        synapse.prediction = prediction
-        
-        bt.logging.success(
-            f"Predicted price 🎯: {synapse.prediction}"
-        )
+        synapse.prediction = list(prediction[0])
+
+        if(synapse.prediction != None):
+            bt.logging.success(
+                f"Predicted price 🎯: {synapse.prediction}"
+            )
+        else:
+            bt.logging.info("No price predicted for this request.")
 
         return synapse
 

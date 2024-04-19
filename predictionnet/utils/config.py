@@ -166,8 +166,15 @@ def add_args(cls, parser):
         parser.add_argument(
             "--model",
             type=str,
-            help="The model the miner will load weights from",
-            default='base_lstm.h5'
+            help="The file name of the model that the miner loads weights from/",
+            default='mining_models/base_lstm_new.h5'
+        )
+
+        parser.add_argument(
+            "--hf_repo_id",
+            type=str,
+            help="The Huggingface repo id where the weights file exists - set as empty string if you want to use weights in local folders.",
+            default='foundryservices/bittensor-sn28-base-lstm'
         )
 
 def config(cls):

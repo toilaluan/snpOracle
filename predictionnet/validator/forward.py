@@ -18,7 +18,7 @@ import bittensor as bt
 import predictionnet
 from predictionnet.protocol import Challenge
 from predictionnet.validator.reward import get_rewards
-from predictionnet.utils.uids import get_random_uids
+from predictionnet.utils.uids import get_random_uids, check_uid_availability
 
 from datetime import datetime, timedelta
 import time
@@ -44,7 +44,16 @@ async def forward(self):
         current_time = datetime.now(ny_timezone)
         if await self.is_market_open(current_time):
             bt.logging.info("Market is open. Begin processes requests")
-            break  # Exit the loop if market is open
+            # Wait until the time is at a 30-minute interval
+            while current_time.minute % 30 not in {0, 1, 2, 3, 4}:    
+                bt.logging.info("Waiting until the next 30-minute interval...")
+                time.sleep(30)  # Check every minute
+            
+                # Update current_time
+                current_time = datetime.now(ny_timezone)
+ 
+            break  # Exit the loop if market is open and at a 30-minute interval
+     
         else:
             bt.logging.info("Market is closed. Sleeping for 5 minutes...")
             time.sleep(300)  # Sleep for 5 minutes before checking again
@@ -54,11 +63,19 @@ async def forward(self):
                 current_time_ny = datetime.now(ny_timezone)
     
 
-    miner_uids = get_random_uids(self, k=min(self.config.neuron.sample_size, self.metagraph.n.item()))
+    #miner_uids = get_random_uids(self, k=min(self.config.neuron.sample_size, self.metagraph.n.item()))
+    #get all uids
+    miner_uids = []
+    for uid in range(self.metagraph.n.item()):
+        uid_is_available = check_uid_availability(
+            self.metagraph, uid, self.config.neuron.vpermit_tao_limit
+        )
+        if uid_is_available:
+            miner_uids.append(uid)
 
     # Here input data should be gathered to send to the miners
     # TODO(create get_input_data())
-    
+    print(miner_uids)    
     current_time_ny = datetime.now(ny_timezone)
     timestamp = current_time_ny.isoformat()
 
