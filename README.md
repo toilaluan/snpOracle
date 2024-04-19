@@ -23,14 +23,14 @@
 ---
 ## Introduction
 
-Foundry is launching Foundry S&P 500 Oracle to incentivize miners to make predictions on the S&P 500 price frequently throughout trading hours. Validators send miners a timestamp (a future time) for which the miners need to make an S&P 500 price prediction for. Miners need to respond with their prediction for the price of the S&P 500 at the given time. Validators store the miner predictions, and then calculate the scores of the miners after the predictions mature. Miners are ranked against eachother, naturally incentivizing competition between the miners. 
+Foundry is launching Foundry S&P 500 Oracle to incentivize miners to make predictions on the S&P 500 price frequently throughout trading hours. Validators send miners a timestamp (a future time), which the miners need to use to make predictions on the close price of the S&P 500 for the next six 5m intervals. Miners need to respond with their prediction for the price of the S&P 500 at the given time. Validators store the miner predictions, and then calculate the scores of the miners after the predictions mature. Miners are ranked against eachother, naturally incentivizing competition between the miners. 
 
 ---
 ## Design Decisions
 
 A Bittensor integration into financial markets will expose Bittensor to the largest system in the world; the global economy. The S&P 500 serves as a perfect starting place for financial predictions given its utility and name recognition. Financial market predictions were chosen for three main reasons:
 1) __Utility:__ financial markets provide a massive userbase of professional traders, wealth managers, and individuals alike
-2) __Objective Rewards Mechanism:__ by tying the rewards mechanism to an external source of truth (yahoo finance's S&P Price), the defensibility of the subnet regarding gamification is quite strong.
+2) __Objective Rewards Mechanism:__ by tying the rewards mechanism to an external source of truth (yahoo finance's S&P Price), the defensibility of the subnet regarding gamification is quite strong. 
 3) __Adversarial Environment:__ the adversarial environment, especially given the rewards mechanism, will allow for significant diversity of models. Miners will be driven to acquire different datasets, implement different training methods, and utilize different model architectures in order to develop the most performant models. 
 ---
 ## Installation
@@ -70,18 +70,26 @@ pip3 install -e snpOracle
 
 ### Running a Miner
 ecosystem.config.js files have been created to make deployment of miners and validators easier for the node operator. These files are the default configuration files for PM2, and allow the user to define the environment & application in a cleaner way. IMPORTANT: Make sure your have activated your virtual environment before running your validator/miner. 
+First copy the .env.template file to .env
+```
+cp .env.template .env
+```
+Update the .env file with your Huggingface access token. A huggingface access token can be procured from the huggingface platform. Follow the <a href='https://huggingface.co/docs/hub/en/security-tokens'>steps mentioned here</a> to get your huggingface access token. If you're model weights are uploaded to a repository of your own or if you're reading a custom model weights file from huggingface, make sure to also make changes to the miner.config.js file's --hf_repo_id and --model args.
+
 To run your miner:
 ```
 pm2 start miner.config.js
 ```
-The miner.config.js has few flags added. Any standard flags can be passed, for example, wallet name and hotkey name will default to "default"; if you have a different configuration, edit your "args" in miner.config.js. Below shows a miner.config.js with extra configuration flags. The model flag is an extra flag used to reference a new model you save to the mining_models directory. The example below uses the default which is the base lstm.
+The miner.config.js has few flags added. Any standard flags can be passed, for example, wallet name and hotkey name will default to "default"; if you have a different configuration, edit your "args" in miner.config.js. Below shows a miner.config.js with extra configuration flags.
+- The hf_repo_id flag will be used to define which huggingface model repository the weights file needs to be downloaded from. You need not necessarily have your model weights on hugging face. If not, then just store the weights in the `mining_models/` folder locally but make sure to define the --hf_repo_id arg to an empty string ('').
+- The model flag is used to reference a new model you save to the mining_models directory or to your huggingface hf_repo_id. The example below uses the default which is the new base lstm on <a href='https://huggingface.co/foundryservices/bittensor-sn28-base-lstm/tree/main'>Foundry's Huggingface repository</a>.
 ```
 module.exports = {
   apps: [
     {
       name: 'miner',
       script: 'python3',
-      args: './neurons/miner.py --netuid 28 --logging.debug --logging.trace --subtensor.network local --wallet.name walletName --wallet.hotkey hotkeyName --axon.port 8091 --model base_lstm.h5'
+      args: './neurons/miner.py --netuid 28 --logging.debug --logging.trace --subtensor.network local --wallet.name walletName --wallet.hotkey hotkeyName --axon.port 8091 --hf_repo_id foundryservices/bittensor-sn28-base-lstm --model mining_models/base_lstm_new.h5'
     },
   ],
 };
@@ -114,19 +122,23 @@ The simplicity of the rewards mechanism is quite intentional. There are no metho
 Root Mean Squared Error(RMSE) is calculated as such:
 ![image](https://github.com/teast21/snpOracle/assets/109384972/214b9b12-2563-498c-8f06-956c9f9ee7b0)
 
-The RMSE is then normalized to enforce scores between 0 and 1, and those scores are used to update the existing scores in the metagraph. The weighting function applied to how scores are added to the metagraph creates a pseudo-rolling average score for predictions. Thus, a miner will have perfect trust after a perfect prediction, and will also not have 0 trust after having the worst prediction of an epoch. Consistent high-quality performance will result in high trust, and consistent low-quality performance will result in low trust and eventual de-registration. 
+Directional accuracy is another metric that is calculated using the predictions and the actual close price data. If the direction in which the (n+1)th prediction goes in, from the (n)th prediction is the same as the direction in which the (n+1)th actual price goes in, from the (n)th actual price, then it is considered directionally correct. Directional accuracy is calculated for the predictions (1,2), (2,3), (3,4), (4,5) & (5,6). The directional accuracy is a score between 0 to 100.
+
+The RMSE + directional accuracy is used to compute the rewards and is given a 50-50 weightage. These values together are then normalized to enforce scores between 0 and 1, and those scores are used to update the existing scores in the metagraph. The miners with the worst scores (highest scores) will be rewarded the least. The weighting function applied to how scores are added to the metagraph creates a pseudo-rolling average score for predictions. Thus, a miner will have perfect trust after a perfect prediction, and will also not have 0 trust after having the worst prediction of an epoch. Consistent high-quality performance will result in high trust, and consistent low-quality performance will result in low trust and eventual de-registration. 
 
 ---
 
 ## Roadmap
 
 Foundry will constantly work to make this subnet more robust, with the north star of creating end-user utility in mind. Some key features we are focused on rolling out to improve the S&P 500 Oracle are listed here:
-[] Huggingface Integration
-[] Wandb Integration
-[] Add Features to Rewards Mechanism
-[] Altering Synapse to hold short term history of predictions
-[] Add new Synapse type for Inference Requests
-[] Front end for end-user access
+- [X] Huggingface Integration
+- [X] Add Features to Rewards Mechanism
+- [X] Query all miners instead of a random subset
+- [X] Automate holiday detection and market close logic
+- [ ] (Ongoing) Wandb Integration
+- [ ] (Ongoing) Altering Synapse to hold short term history of predictions
+- [ ] (Ongoing) Front end for end-user access
+- [ ] Add new Synapse type for Inference Requests
 
 We happily accept community feedback and features suggestions. Please reach out to @0xthebom on discord :-)
 
