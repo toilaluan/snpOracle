@@ -81,7 +81,7 @@ To run your miner:
 pm2 start miner.config.js
 ```
 The miner.config.js has few flags added. Any standard flags can be passed, for example, wallet name and hotkey name will default to "default"; if you have a different configuration, edit your "args" in miner.config.js. Below shows a miner.config.js with extra configuration flags.
-- The hf_repo_id flag will be used to define which huggingface model repository the weights file needs to be downloaded from. You need not necessarily have your model weights on hugging face. If not, then just store the weights in the `mining_models/` folder locally but make sure to define the --hf_repo_id arg to an empty string ('').
+-  The hf_repo_id flag will be used to define which huggingface model repository the weights file needs to be downloaded from. You need not necessarily load your model weights from huggingface. If you would like to load weights from a local folder like `mining_models/`, then store the weights in the `mining_models/` folder and make sure to define the --hf_repo_id arg to `LOCAL` like `--hf_repo_id LOCAL`.
 - The model flag is used to reference a new model you save to the mining_models directory or to your huggingface hf_repo_id. The example below uses the default which is the new base lstm on <a href='https://huggingface.co/foundryservices/bittensor-sn28-base-lstm/tree/main'>Foundry's Huggingface repository</a>.
 ```
 module.exports = {
