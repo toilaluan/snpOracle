@@ -171,7 +171,7 @@ class Miner(BaseMinerNeuron):
         timestamp = synapse.timestamp
 
         # Download the file
-        if(self.config.hf_repo_id==""):
+        if(self.config.hf_repo_id=="LOCAL"):
             model_path = f'./{self.config.model}'
             bt.logging.info(f"Model weights file from a local folder will be loaded - Local weights file path: {self.config.model}")
         else:
