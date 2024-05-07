@@ -55,8 +55,8 @@ async def forward(self):
             break  # Exit the loop if market is open and at a 30-minute interval
      
         else:
-            bt.logging.info("Market is closed. Sleeping for 5 minutes...")
-            time.sleep(300)  # Sleep for 5 minutes before checking again
+            bt.logging.info("Market is closed. Sleeping for 2 minutes...")
+            time.sleep(120)  # Sleep for 5 minutes before checking again
 
             if datetime.now(ny_timezone) - current_time_ny >= timedelta(hours=1):
                 self.set_weights()
