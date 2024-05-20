@@ -59,6 +59,7 @@ async def forward(self):
             time.sleep(120)  # Sleep for 5 minutes before checking again
 
             if datetime.now(ny_timezone) - current_time_ny >= timedelta(hours=1):
+                self.resync_metagraph()
                 self.set_weights()
                 current_time_ny = datetime.now(ny_timezone)
     
