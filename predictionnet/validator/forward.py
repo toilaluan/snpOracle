@@ -47,6 +47,7 @@ async def forward(self):
             # Wait until the time is at a 30-minute interval
             while current_time.minute % 30 not in {0, 1, 2, 3, 4}:    
                 bt.logging.info("Waiting until the next 30-minute interval...")
+                self.resync_metagraph()
                 time.sleep(30)  # Check every minute
             
                 # Update current_time
