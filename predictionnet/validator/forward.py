@@ -118,7 +118,7 @@ async def forward(self):
     wandb_val_log = {
         "miners_info": {
             miner_uid: {
-                "miner_response":response, 
+                "miner_response":response.prediction, 
                 "miner_reward": reward
             }
             for miner_uid, response, reward in zip(miner_uids, responses, rewards.tolist())
