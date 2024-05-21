@@ -109,6 +109,8 @@ def get_rewards(
 
     while (datetime.now(ny_timezone) < rounded_up_time - timedelta(minutes=4, seconds=30)):
         bt.logging.info(f"Waiting for next {INTERVAL}m interval...")
+        if(datetime.now(ny_timezone).minute%10==0):
+            self.resync_metagraph()
         time.sleep(15)
 
     current_time_adjusted = rounded_up_time - timedelta(minutes=INTERVAL + 5)
