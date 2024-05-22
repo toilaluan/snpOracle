@@ -97,12 +97,22 @@ module.exports = {
 ### Running a Validator
 ecosystem.config.js files have been created to make deployment of miners and validators easier for the node operator. These files are the default configuration files for PM2, and allow the user to define the environment & application in a cleaner way. IMPORTANT: Make sure your have activated your virtual environment before running your validator/miner. 
 
+#### Obtain & Setup WandB API Key
+Before starting the process, validators would be required to procure a WANDB API Key. Please follow the instructions mentioned below:<br>
+
+- Log in to <a href="https://wandb.ai">Weights & Biases</a> and generate an API key in your account settings.
+- Copy the .env.template file's contents to a .env file - `cp .env.template .env`
+- Set the variable WANDB_API_KEY in the .env file. You can leave the `HUGGINGFACE_ACCESS_TOKEN` variable as is. Just make sure to update the `WANDB_API_KEY` variable.
+- Finally, run `wandb login` and paste your API key. Now you're all set with weights & biases.
+
+Once you've setup wandb, you can now run your validator by running the command below. Make sure to set your respective hotkey, coldkey, and other configuration variables accurately.
+
 To run your validator:
 ```
 pm2 start validator.config.js
 ```
 
-The validator.config.js has few flags added. Any standard flags can be passed, for example, wallet name and hotkey name will default to "default"; if you have a different configuration, edit your "args" in miner.config.js. Below shows a miner.config.js with extra configuration flags. 
+The validator.config.js has few flags added. Any standard flags can be passed, for example, wallet name and hotkey name will default to "default"; if you have a different configuration, edit your "args" in validator.config.js. Below shows a validator.config.js with extra configuration flags. 
 ```
 module.exports = {
   apps: [
