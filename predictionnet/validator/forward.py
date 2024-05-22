@@ -23,7 +23,7 @@ from predictionnet.utils.uids import get_random_uids, check_uid_availability
 from datetime import datetime, timedelta
 import time
 from pytz import timezone
-
+import wandb
 
 async def forward(self):
     """
@@ -48,6 +48,8 @@ async def forward(self):
             while current_time.minute % 30 not in {0, 1, 2, 3, 4}:    
                 bt.logging.info("Waiting until the next 30-minute interval...")
                 time.sleep(30)  # Check every minute
+                if(current_time.minute%10==0):
+                    self.resync_metagraph()
             
                 # Update current_time
                 current_time = datetime.now(ny_timezone)
@@ -59,6 +61,7 @@ async def forward(self):
             time.sleep(120)  # Sleep for 5 minutes before checking again
 
             if datetime.now(ny_timezone) - current_time_ny >= timedelta(hours=1):
+                self.resync_metagraph()
                 self.set_weights()
                 current_time_ny = datetime.now(ny_timezone)
     
@@ -111,6 +114,19 @@ async def forward(self):
     # query = synapse most likely?
     #rewards = get_rewards(self, query=self.step, responses=responses)
     rewards = get_rewards(self, query=synapse, responses=responses)
+
+    wandb_val_log = {
+        "miners_info": {
+            miner_uid: {
+                "miner_response":response.prediction, 
+                "miner_reward": reward
+            }
+            for miner_uid, response, reward in zip(miner_uids, responses, rewards.tolist())
+        }
+    }
+
+    wandb.log(wandb_val_log)
+
     # Potentially will need some  
     bt.logging.info(f"Scored responses: {rewards}")
     # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
