@@ -38,6 +38,7 @@ from sklearn.preprocessing import MinMaxScaler
 #     return rmse
 
 INTERVAL = 30
+NUM_PRED = 6 #Number of predicted values from miner and the ground truth values from Yfinance
 
 def get_direction_accuracy(close_price_array, prediction_array):
     # Calculate the direction of changes (up: 1, down: -1)
@@ -48,8 +49,7 @@ def get_direction_accuracy(close_price_array, prediction_array):
     correct_predictions = sum(1 for i in range(len(actual_directions)) if actual_directions[i] == predicted_directions[i])
 
     # Calculate directional accuracy
-    directional_accuracy = (correct_predictions/len(actual_directions)-1)*100
-
+    directional_accuracy = (correct_predictions/(len(actual_directions)-1))*100
     return directional_accuracy
 
 def reward(response: Challenge, close_price: float) -> float:
@@ -63,8 +63,18 @@ def reward(response: Challenge, close_price: float) -> float:
     prediction_array = np.array(response.prediction)
     close_price_array = np.array(close_price)
 
-    mse = mean_squared_error(prediction_array, close_price_array)
-    directional_accuracy = get_direction_accuracy(close_price_array, prediction_array)
+    if len(prediction_array) != NUM_PRED:
+        return 0.0
+    elif len(close_price_array) < NUM_PRED:
+        prediction_array = prediction_array[:len(close_price_array)]
+    else:
+        close_price_array = close_price_array[:NUM_PRED]
+
+    try:
+        mse = mean_squared_error(prediction_array, close_price_array)
+        directional_accuracy = get_direction_accuracy(close_price_array, prediction_array)
+    except Exception as e:
+        bt.logging.info(f"Validator error in reward function: {e}")
 
     # subtracting dir accuracy from 100 because the goal is to reward those that make quality predictions for longer durations
     # If the reward function gives a higher value, the weights will be

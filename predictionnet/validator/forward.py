@@ -89,8 +89,8 @@ async def forward(self):
         timestamp=timestamp,
     )
 
-    with open('timestamp.txt', 'w') as file:
-        file.write(timestamp)
+    #with open('timestamp.txt', 'w') as file:
+    #    file.write(timestamp)
 
     # The dendrite client queries the network.
     responses = self.dendrite.query(
