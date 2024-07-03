@@ -248,8 +248,8 @@ class BaseValidatorNeuron(BaseNeuron):
 
         # Set the weights on chain via our subtensor connection.
         bt.logging.info(f"Setting weights...")
-        result, msg = self.subtensor.set_weights(
-            wallet=self.wallet,
+        result, msg = self.subtensor.set_root_weights(
+            wallet=self.wallet, # Bittensor Version 7.1.0 grabs Coldkey
             netuid=self.config.netuid,
             uids=uint_uids,
             weights=uint_weights,
