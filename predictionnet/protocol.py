@@ -67,6 +67,23 @@ class Challenge(bt.Synapse):
         description="Next 6 5m candles' predictions for closing price of S&P 500"
     )
 
+<<<<<<< Updated upstream
+=======
+    past_predictions: Optional[np.array[float]] = pydantic.Field(
+        default=None,
+        title="Past Predictions",
+        description="Past 6 5m candles' predictions for closing price of S&P 500",
+        allow_mutation=False,
+    )
+
+    past_close_prices: Optional[np.array[float]] = pydantic.Field(
+        default=None,
+        title="Past Close Prices",
+        description="Past N_TIMEPOINTS epochs of N_TIMEPOINTS close prices for closing price of S&P 500",
+        allow_mutation=False,
+    )
+
+>>>>>>> Stashed changes
     def deserialize(self) -> int:
         """
         Deserialize the dummy output. This method retrieves the response from

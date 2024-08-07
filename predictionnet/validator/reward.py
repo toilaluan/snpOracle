@@ -81,8 +81,29 @@ def reward(response: Challenge, close_price: float) -> float:
     # lower since the result from this is subtracted from 1 subsequently
     return 0.5*(mse**0.5 + (100 - directional_accuracy))
 
+<<<<<<< Updated upstream
 # Query prob editied to query: Protocol defined synapse
 # For this method mostly should defer to Rahul/Tommy
+=======
+def time_shift(array):
+    # this is a strange but necessary function to replace predictions that havent come to fruition with nans
+    # and align past prediction with the currect epoch
+    shifted_array = np.full((array.shape[0], array.shape[1]), np.nan)
+    for i in range(array.shape[0]):
+        if i != range(array.shape[0]):
+            shifted_array[i,-i-1:] = array[i,0:i+1]
+        else:
+            shifted_array[i,:] = array[i,:]
+    return shifted_array
+
+def update_synapse(self, query: Challenge, response: Challenge):
+    query.past_close_prices = 
+    'foo'
+
+################################################################################
+#                                Main Function                                 #
+################################################################################
+>>>>>>> Stashed changes
 def get_rewards(
     self,
     query: Challenge,
