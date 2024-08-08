@@ -66,7 +66,7 @@ def calc_raw(self, response: Challenge, close_price: float):
             # add the timepoint before the first t from past history for each epoch
             before_pred_vector = np.concatenate((prediction_array[1:,0], np.array([0]))).reshape(self.N_TIMEPOINTS+1, 1)
             before_close_vector = np.concatenate((close_price_array[1:,0], np.array([0]))).reshape(self.N_TIMEPOINTS+1, 1)
-            
+
         # take the difference between timepoints and remove the oldest epoch (it is now obselete)
         pred_dir = np.diff(np.concatenate((before_pred_vector, prediction_array), axis=1), axis=1)[:-1,:]
         close_dir = np.diff(np.concatenate((before_close_vector, close_price_array), axis=1), axis=1)[:-1,:]
@@ -74,7 +74,7 @@ def calc_raw(self, response: Challenge, close_price: float):
         deltas = np.abs(time_shift(close_price_array[:-1,:])-time_shift(prediction_array[:-1,:]))
         return deltas, correct_dirs
         
-def rank_miners_by_epoch(deltas: np.ndarray, correct_dirs: np.ndarray):
+def rank_miners_by_epoch(N_TIMEPOINTS,deltas: np.ndarray, correct_dirs: np.ndarray):
     # inputs should be nMiners x N_TIMEPOINTS matrix of one prediction epoch and should be matched between deltas and correct_dirs
     #    - deltas is a float array of the absolute difference between the predicted price and the true price
     #    - correct_dirs is a boolean array for if the predicted direction matched the true direction
@@ -201,7 +201,7 @@ def get_rewards(
     # raw_deltas is now a full of the last N_TIMEPOINTS of prediction deltas, same for raw_correct_dir
     ranks = np.full((len(responses),N_TIMEPOINTS,N_TIMEPOINTS), np.nan)
     for t in range(N_TIMEPOINTS):
-        ranks[:,:,t] = rank_miners_by_epoch(raw_deltas[:,:,t], raw_correct_dir[:,:,t])
+        ranks[:,:,t] = rank_miners_by_epoch(N_TIMEPOINTS, raw_deltas[:,:,t], raw_correct_dir[:,:,t])
 
     incentives = np.mean(np.nanmean(ranks, axis=2), axis=1).argsort().argsort()
     reward = np.exp(-0.05*incentives)
