@@ -66,7 +66,6 @@ def calc_raw(self, response: Challenge, close_price: float):
             # add the timepoint before the first t from past history for each epoch
             before_pred_vector = np.concatenate((prediction_array[1:,0], np.array([0]))).reshape(self.N_TIMEPOINTS+1, 1)
             before_close_vector = np.concatenate((close_price_array[1:,0], np.array([0]))).reshape(self.N_TIMEPOINTS+1, 1)
-
         # take the difference between timepoints and remove the oldest epoch (it is now obselete)
         pred_dir = np.diff(np.concatenate((before_pred_vector, prediction_array), axis=1), axis=1)[:-1,:]
         close_dir = np.diff(np.concatenate((before_close_vector, close_price_array), axis=1), axis=1)[:-1,:]
@@ -118,9 +117,9 @@ def time_shift(array):
             shifted_array[i,:] = array[i,:]
     return shifted_array
 
-def update_synapse(self, uid, query: Challenge, response: Challenge, close_price: float):
-    new_past_close_prices = np.concatenate((np.array(close_price), query.past_close_prices), axis=0)
-    new_past_predictions = np.concatenate((np.array(response.prediction), query.past_predictions), axis=0)
+def update_synapse(response: Challenge, close_price: float):
+    new_past_close_prices = np.concatenate((np.array(close_price), response.past_close_prices), axis=0)
+    new_past_predictions = np.concatenate((np.array(response.prediction), response.past_predictions), axis=0)
     response.past_close_prices = new_past_close_prices[0:-1,:] # remove the oldest epoch
     response.past_predictions = new_past_predictions[0:-1,:] # remove the oldest epoch
     # self.past_predictions = query.past_predictions
@@ -196,7 +195,7 @@ def get_rewards(
         else:
             raw_deltas[x,:,:] = delta
             raw_correct_dir[x,:,:] = correct
-        update_synapse(self, x, query, response)
+        update_synapse(x, response)
 
     # raw_deltas is now a full of the last N_TIMEPOINTS of prediction deltas, same for raw_correct_dir
     ranks = np.full((len(responses),N_TIMEPOINTS,N_TIMEPOINTS), np.nan)
@@ -208,8 +207,3 @@ def get_rewards(
     reward[incentives>100] = 0
     reward = reward/np.max(reward)
     return torch.FloatTensor(reward)
-
-    #scaler = MinMaxScaler(feature_range=(0,1))
-    #return torch.FloatTensor(scaler.fit_transform(np.array(scoring).reshape(-1, 1)).flatten()).to(self.device)
-
-
