@@ -26,7 +26,8 @@ import bittensor as bt
 
 from typing import List
 from traceback import print_exception
-
+from datetime import datetime, timedelta
+from pytz import timezone
 from predictionnet.base.neuron import BaseNeuron
 import time
 
@@ -69,6 +70,10 @@ class BaseValidatorNeuron(BaseNeuron):
         self.is_running: bool = False
         self.thread: threading.Thread = None
         self.lock = asyncio.Lock()
+        self.prediction_interval = 5 # in minutes
+        self.N_TIMEPOINTS = 6 # number of timepoints to predict
+        self.INTERVAL = self.prediction_interval * self.N_TIMEPOINTS # 30 Minutes
+        self.miner_update_time = datetime.now(timezone('America/New_York')) - timedelta(minutes=self.prediction_interval)
 
     def serve_axon(self):
         """Serve axon to enable external connections."""

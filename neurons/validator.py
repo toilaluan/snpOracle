@@ -77,37 +77,28 @@ class Validator(BaseValidatorNeuron):
                 reinit=True,
         )
         
-    
-    async def is_market_open(self, time):
-        # Convert Unix timestamp to datetime in UTC
-        #time = datetime.utcfromtimestamp(unix_time).replace(tzinfo=pytz.utc)
+    async def is_valid_time(self):
+        est = pytz.timezone('America/New_York')
+        now = datetime.now(est)
+        # Check if today is Monday through Friday
+        if now.weekday() >= 5:  # 0 is Monday, 6 is Sunday
+            return False
+        if not self.market_is_open(now):
+            return False
+        # Check if the current time is between 9:30 AM and 4:00 PM
+        start_time = now.replace(hour=9, minute=30, second=0, microsecond=0)
+        end_time = now.replace(hour=16, minute=0, second=0, microsecond=0)
+        if not (start_time <= now <= end_time):
+            return False
+        # # if all checks pass, return true
+        # return True
+        # if at least prediction_interval minutes have passed since they were queried
+        if self.miner_update_time + timedelta(minutes=self.prediction_interval) <= now:
+            return True
 
-        if time.weekday() < 5:  # Check if it's a weekday
-            # Create a market calendar for NYSE
-            nyse = mcal.get_calendar('NYSE')
-
-            # Convert `time` to 'America/New_York' before checking the schedule
-            ny_time = time.astimezone(pytz.timezone('America/New_York'))
-            #print(ny_time)
-            # Check if the current date is a holiday or a market day
-            schedule = nyse.schedule(start_date=ny_time.date(), end_date=ny_time.date())
-            
-            if not schedule.empty:
-                market_open = schedule.iloc[0]['market_open']
-                market_close = schedule.iloc[0]['market_close']
-
-                # Check if current time is within market hours
-                if market_open <= ny_time <= market_close:
-                    #print(ny_time)
-                    ticker_symbol = '^GSPC'
-                    ticker = yf.Ticker(ticker_symbol)
-                    adjusted = ny_time - timedelta(minutes=35)
-                    data = ticker.history(start=adjusted, end=ny_time, interval='5m')
-                    
-                    return len(data) > 0
-
-        bt.logging.info(f"Market Closed today")
-        return False
+    async def market_is_open(self, date):
+        result = mcal.get_calendar("NYSE").schedule(start_date=date, end_date=date)
+        return result.empty == False
 
     async def forward(self):
         """

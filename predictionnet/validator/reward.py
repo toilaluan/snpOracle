@@ -27,8 +27,7 @@ import yfinance as yf
 from pytz import timezone
 import numpy as np
 
-INTERVAL = 30
-N_TIMEPOINTS = 6
+
 # run this through time_shift to see how the function works
 # this array represents how the past_predictions is organized by time. 0 is the current prediction epoch
 # test_array = np.array([[0,5,10,15,20,25], # - response.prediction so the current timepoint
@@ -124,7 +123,7 @@ def update_synapse(self, query: Challenge, response: Challenge, close_price: flo
     new_past_predictions = np.concatenate((np.array(response.prediction), query.past_predictions), axis=0)
     query.past_close_prices = new_past_close_prices[0:-1,:] # remove the oldest epoch
     query.past_predictions = new_past_predictions[0:-1,:] # remove the oldest epoch
-    'foo'
+
 
 ################################################################################
 #                                Main Function                                 #
@@ -144,7 +143,9 @@ def get_rewards(
     Returns:
     - torch.FloatTensor: A tensor of rewards for the given query and responses.
     """
-
+    INTERVAL = self.INTERVAL
+    N_TIMEPOINTS = self.N_TIMEPOINTS
+    prediction_interval = self.prediction_interval
     if len(responses) == 0:
         bt.logging.info("Got no responses. Returning reward tensor of zeros.")
         return [], torch.zeros_like(0).to(self.device)  # Fallback strategy: Log and return 0.
@@ -157,20 +158,18 @@ def get_rewards(
     timestamp = datetime.fromisoformat(timestamp)
 
     # Round up current timestamp and then wait until that time has been hit
-    rounded_up_time = timestamp - timedelta(minutes=timestamp.minute % INTERVAL,
+    rounded_up_time = timestamp - timedelta(minutes=timestamp.minute % prediction_interval,
                                     seconds=timestamp.second,
-                                    microseconds=timestamp.microsecond) + timedelta(minutes=INTERVAL + 5, seconds=30)
+                                    microseconds=timestamp.microsecond) + timedelta(minutes=prediction_interval, seconds=1)
     
     ny_timezone = timezone('America/New_York')
 
-    while (datetime.now(ny_timezone) < rounded_up_time - timedelta(minutes=4, seconds=30)):
-        bt.logging.info(f"Waiting for next {INTERVAL}m interval...")
-        if(datetime.now(ny_timezone).minute%10==0):
+    while (datetime.now(ny_timezone) < rounded_up_time):
+        bt.logging.info(f"Waiting for next {prediction_interval}m interval...")
+        if(datetime.now(ny_timezone).minute%20==0):
             self.resync_metagraph()
         time.sleep(15)
 
-    current_time_adjusted = rounded_up_time - timedelta(minutes=INTERVAL + 5)
-    print(rounded_up_time, rounded_up_time.hour, rounded_up_time.minute, current_time_adjusted)
     
     data = yf.download(tickers=ticker_symbol, period='1d', interval='5m')
     bt.logging.info("Procured data from yahoo finance.")
