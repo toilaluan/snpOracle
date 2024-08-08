@@ -52,6 +52,8 @@ class Validator(BaseValidatorNeuron):
 
         bt.logging.info("load_state()")
         self.load_state()
+        self.past_predictions = None
+        self.past_close_prices = None
 
         # TODO(developer): Anything specific to your use case you can do here
         netrc_path = pathlib.Path.home() / ".netrc"

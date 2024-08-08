@@ -70,7 +70,6 @@ async def forward(self):
     timestamp = current_time_ny.isoformat()
     self.miner_update_time = current_time_ny
 
-
     # Build synapse for request
     # Replace dummy_input with actually defined variables in protocol.py
     # This can be combined with line 49

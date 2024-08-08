@@ -41,7 +41,7 @@ import numpy as np
 ################################################################################
 #                              Helper Functions                                #
 ################################################################################
-def calc_raw(response: Challenge, query: Challenge, close_price: float):
+def calc_raw(self, response: Challenge, close_price: float):
     # calculate delta and whether the direction of prediction was correct for each timepoint for a single response
     # use the saved past_predictions to include up to N_TIMEPOINTS of history
     # OUTPUT format:
@@ -53,25 +53,25 @@ def calc_raw(response: Challenge, query: Challenge, close_price: float):
     if len(response.prediction) != len(close_price):
         return None, None
     else:
-        if query.past_predictions is None:
-            # if no history has been saved yet, give them the benefit of the doubt
-            correct_dirs = np.concatenate((np.array(True), (np.diff(close_price)>=0)==(np.diff(response.prediction)>=0)))
-        else: 
-            prediction_array = np.concatenate((np.array(response.prediction), query.past_predictions), axis=0)
-            close_price_array = np.concatenate((np.array(close_price), query.past_close_prices), axis=0)
-            if len(query.past_predictions.shape) == 1:
-                before_pred_vector = np.array([])
-                before_close_vector = np.array([])
-            else:
-                # add the timepoint before the first t from past history for each epoch
-                before_pred_vector = np.concatenate((prediction_array[1:,0], np.array([0]))).reshape(N_TIMEPOINTS+1, 1)
-                before_close_vector = np.concatenate((close_price_array[1:,0], np.array([0]))).reshape(N_TIMEPOINTS+1, 1)
-            # take the difference between timepoints and remove the oldest epoch (it is now obselete)
-
-            pred_dir = np.diff(np.concatenate((before_pred_vector, prediction_array), axis=1), axis=1)[:-1,:]
-            close_dir = np.diff(np.concatenate((before_close_vector, close_price_array), axis=1), axis=1)[:-1,:]
-            correct_dirs = time_shift((close_dir>=0)==(pred_dir>=0))
-            deltas = np.abs(time_shift(close_price_array[:-1,:])-time_shift(prediction_array[:-1,:]))
+        # if there is no saved history for this neuron yet
+        if response.past_predictions is None:
+            response.past_predictions = np.full((self.N_TIMEPOINTS, self.N_TIMEPOINTS), np.nan)
+            response.past_close_prices = np.full((self.N_TIMEPOINTS, self.N_TIMEPOINTS), np.nan)
+        prediction_array = np.concatenate((np.array(response.prediction), response.past_predictions), axis=0)
+        close_price_array = np.concatenate((np.array(close_price), response.past_close_prices), axis=0)
+        if len(response.past_predictions.shape) == 1:
+            before_pred_vector = np.array([])
+            before_close_vector = np.array([])
+        else:
+            # add the timepoint before the first t from past history for each epoch
+            before_pred_vector = np.concatenate((prediction_array[1:,0], np.array([0]))).reshape(self.N_TIMEPOINTS+1, 1)
+            before_close_vector = np.concatenate((close_price_array[1:,0], np.array([0]))).reshape(self.N_TIMEPOINTS+1, 1)
+            
+        # take the difference between timepoints and remove the oldest epoch (it is now obselete)
+        pred_dir = np.diff(np.concatenate((before_pred_vector, prediction_array), axis=1), axis=1)[:-1,:]
+        close_dir = np.diff(np.concatenate((before_close_vector, close_price_array), axis=1), axis=1)[:-1,:]
+        correct_dirs = time_shift((close_dir>=0)==(pred_dir>=0))
+        deltas = np.abs(time_shift(close_price_array[:-1,:])-time_shift(prediction_array[:-1,:]))
         return deltas, correct_dirs
         
 def rank_miners_by_epoch(deltas: np.ndarray, correct_dirs: np.ndarray):
@@ -118,11 +118,13 @@ def time_shift(array):
             shifted_array[i,:] = array[i,:]
     return shifted_array
 
-def update_synapse(self, query: Challenge, response: Challenge, close_price: float):
+def update_synapse(self, uid, query: Challenge, response: Challenge, close_price: float):
     new_past_close_prices = np.concatenate((np.array(close_price), query.past_close_prices), axis=0)
     new_past_predictions = np.concatenate((np.array(response.prediction), query.past_predictions), axis=0)
-    query.past_close_prices = new_past_close_prices[0:-1,:] # remove the oldest epoch
-    query.past_predictions = new_past_predictions[0:-1,:] # remove the oldest epoch
+    response.past_close_prices = new_past_close_prices[0:-1,:] # remove the oldest epoch
+    response.past_predictions = new_past_predictions[0:-1,:] # remove the oldest epoch
+    # self.past_predictions = query.past_predictions
+    # self.past_close_prices = query.past_close_prices
 
 
 ################################################################################
@@ -186,7 +188,7 @@ def get_rewards(
     ranks = np.full((len(responses),N_TIMEPOINTS,N_TIMEPOINTS), np.nan)
     for x,response in enumerate(responses):
         # calc_raw also does many helpful things like shifting epoch to 
-        delta , correct = calc_raw(response, close_price)
+        delta , correct = calc_raw(self, response, close_price)
         if delta is None or correct is None:
             bt.logging.info(f'Netuid {x} returned {len(response.predictions)} predictions instead of {N_TIMEPOINTS}. Setting incentive to 0')
             raw_deltas[x,:,:], raw_correct_dir[x,:,:] = np.nan, np.nan
@@ -194,7 +196,7 @@ def get_rewards(
         else:
             raw_deltas[x,:,:] = delta
             raw_correct_dir[x,:,:] = correct
-        update_synapse(self, query, response)
+        update_synapse(self, x, query, response)
 
     # raw_deltas is now a full of the last N_TIMEPOINTS of prediction deltas, same for raw_correct_dir
     ranks = np.full((len(responses),N_TIMEPOINTS,N_TIMEPOINTS), np.nan)
