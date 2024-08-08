@@ -50,6 +50,8 @@ def calc_raw(self, response: Challenge, close_price: float):
     #    - the final row is N_TIMEPOINTS epochs ago with a 30min prediction for the current timepoint
     #    - the final column is the current timepoint with various prediction distances (5min, 10min,...)
     #    - to further investigate format, run 'time_shift(test_array)'
+    if response.prediction is None:
+        return None, None
     if len(response.prediction) != len(close_price):
         return None, None
     else:
@@ -189,8 +191,13 @@ def get_rewards(
         # calc_raw also does many helpful things like shifting epoch to 
         delta , correct = calc_raw(self, response, close_price)
         if delta is None or correct is None:
-            bt.logging.info(f'Netuid {x} returned {len(response.predictions)} predictions instead of {N_TIMEPOINTS}. Setting incentive to 0')
-            raw_deltas[x,:,:], raw_correct_dir[x,:,:] = np.nan, np.nan
+            if response.prediction is None:
+                # no response generated
+                raw_deltas[x,:,:], raw_correct_dir[x,:,:] = np.nan, np.nan
+            else:
+                # wrong size response generated
+                bt.logging.info(f'Netuid {x} returned {len(response.predictions)} predictions instead of {N_TIMEPOINTS}. Setting incentive to 0')
+                raw_deltas[x,:,:], raw_correct_dir[x,:,:] = np.nan, np.nan
             continue
         else:
             raw_deltas[x,:,:] = delta
