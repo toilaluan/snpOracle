@@ -96,7 +96,7 @@ class Validator(BaseValidatorNeuron):
         if self.miner_update_time + timedelta(minutes=self.prediction_interval) <= now:
             return True
 
-    async def market_is_open(self, date):
+    def market_is_open(self, date):
         result = mcal.get_calendar("NYSE").schedule(start_date=date, end_date=date)
         return result.empty == False
 
