@@ -69,8 +69,13 @@ def calc_raw(self, response: Challenge, close_price: float):
             before_pred_vector = np.concatenate((prediction_array[1:,0], np.array([0]))).reshape(self.N_TIMEPOINTS+1, 1)
             before_close_vector = np.concatenate((close_price_array[1:,0], np.array([0]))).reshape(self.N_TIMEPOINTS+1, 1)
         # take the difference between timepoints and remove the oldest epoch (it is now obselete)
-        pred_dir = np.diff(np.concatenate((before_pred_vector, prediction_array), axis=1), axis=1)[:-1,:]
-        close_dir = np.diff(np.concatenate((before_close_vector, close_price_array), axis=1), axis=1)[:-1,:]
+        # # old version, each timepoint compared to the previous timepoint
+        # pred_dir = np.diff(np.concatenate((before_pred_vector, prediction_array), axis=1), axis=1)[:-1,:]
+        # close_dir = np.diff(np.concatenate((before_close_vector, close_price_array), axis=1), axis=1)[:-1,:]
+
+        # new version, each timepoint compared to t_0 for that epoch
+        pred_dir = (before_pred_vector - prediction_array)[:-1,:]
+        close_dir = (before_close_vector - close_price_array)[:-1,:]
         correct_dirs = time_shift((close_dir>=0)==(pred_dir>=0))
         deltas = np.abs(time_shift(close_price_array[:-1,:])-time_shift(prediction_array[:-1,:]))
         return deltas, correct_dirs
