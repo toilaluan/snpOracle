@@ -90,11 +90,11 @@ class Validator(BaseValidatorNeuron):
         end_time = now.replace(hour=16, minute=0, second=0, microsecond=0)
         if not (start_time <= now <= end_time):
             return False
-        # # if all checks pass, return true
-        # return True
-        # if at least prediction_interval minutes have passed since they were queried
-        if self.miner_update_time + timedelta(minutes=self.prediction_interval) <= now:
-            return True
+        # if all checks pass, return true
+        return True
+        # # if at least prediction_interval minutes have passed since they were queried
+        # if self.miner_update_time + timedelta(minutes=self.prediction_interval) <= now:
+        #     return True
 
     def market_is_open(self, date):
         result = mcal.get_calendar("NYSE").schedule(start_date=date, end_date=date)
