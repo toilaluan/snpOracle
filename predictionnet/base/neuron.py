@@ -71,8 +71,11 @@ class BaseNeuron(ABC):
         self.device = self.config.neuron.device
         if self.config.logging.debug:
             bt.logging.set_debug()
+            bt.logging.debug("Enabled Debug")
         if self.config.logging.trace:
+            bt.logging.trace("Enabled Trace")
             bt.logging.set_trace()
+        
         # Log the configuration for reference.
         bt.logging.info(self.config)
 
