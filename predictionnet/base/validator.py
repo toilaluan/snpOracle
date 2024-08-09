@@ -30,6 +30,7 @@ from traceback import print_exception
 from predictionnet.base.neuron import BaseNeuron
 import time
 import random
+import numpy as np
 
 
 class BaseValidatorNeuron(BaseNeuron):
@@ -241,7 +242,7 @@ class BaseValidatorNeuron(BaseNeuron):
         # Check if self.scores contains any NaN values and log a warning if it does.
         if torch.isnan(self.scores).any():
             bt.logging.warning(
-                f"Scores contain NaN values. This may be due to a lack of responses from miners, or a bug in your reward functions."
+                "Scores contain NaN values. This may be due to a lack of responses from miners, or a bug in your reward functions."
             )
 
         # Calculate the average reward for each uid across non-zero values.
@@ -249,48 +250,34 @@ class BaseValidatorNeuron(BaseNeuron):
         raw_weights = torch.nn.functional.normalize(self.scores, p=1, dim=0)
 
         bt.logging.debug("raw_weights", raw_weights)
-        bt.logging.debug("raw_weight_uids", self.metagraph.uids.to("cpu"))
-        # Process the raw weights to final_weights via subtensor limitations.
+        bt.logging.debug("raw_weight_uids", self.metagraph.uids)
         (
             processed_weight_uids,
             processed_weights,
-        ) = bt.utils.weight_utils.process_weights_for_netuid(
-            # PyTorch Function to move data to CPU
-            uids=self.metagraph.uids.to("cpu"),
-            weights=raw_weights.to("cpu"),
-            netuid=self.config.netuid,
-            subtensor=self.subtensor,
-            metagraph=self.metagraph,
-        )
-        bt.logging.debug("processed_weights", processed_weights)
-        bt.logging.debug("processed_weight_uids", processed_weight_uids)
-
-        # Convert to uint16 weights and uids.
-        (
-            uint_uids,
-            uint_weights,
         ) = bt.utils.weight_utils.convert_weights_and_uids_for_emit(
-            uids=processed_weight_uids, weights=processed_weights
+            uids=self.metagraph.uids,
+            weights=np.array(raw_weights),
         )
-        bt.logging.debug("uint_weights", uint_weights)
-        bt.logging.debug("uint_uids", uint_uids)
+        bt.logging.trace("processed_weights", processed_weights)
+        bt.logging.trace("processed_weight_uids", processed_weight_uids)
 
         # Set the weights on chain via our subtensor connection.
-        bt.logging.info(f"Setting weights...")
+        bt.logging.info("Setting weights...")
         result, msg = self.subtensor.set_weights(
             wallet=self.wallet,
-            netuid=self.config.netuid,
-            uids=uint_uids,
-            weights=uint_weights,
-            wait_for_finalization=False,
-            wait_for_inclusion=False,
-            version_key=self.spec_version
+            netuid=self.netuid,
+            uids=processed_weight_uids,
+            weights=processed_weights,
+            wait_for_finalization=True,
+            wait_for_inclusion=True,
+            version_key=1100,
         )
 
         if result:
             bt.logging.info("set_weights on chain successfully!")
         else:
             bt.logging.debug("Failed to set weights this iteration with message:", msg)
+
 
     def reveal_weights(self):
         result, msg = self.subtensor.reveal_weights(
