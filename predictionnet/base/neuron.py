@@ -75,6 +75,11 @@ class BaseNeuron(ABC):
 
         # Build Bittensor objects
         # These are core Bittensor classes to interact with the network.
+        if self.config.logging.debug:
+            bt.logging.set_debug()
+        if self.config.logging.trace:
+            bt.logging.set_trace()
+
         bt.logging.info("Setting up bittensor objects.")
 
         # The wallet holds the cryptographic key pairs for the miner.
